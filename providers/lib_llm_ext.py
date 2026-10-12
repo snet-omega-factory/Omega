@@ -371,8 +371,10 @@ class AIProvider(AbstractAIProvider):
                     .replace("</tool_call>", " ").replace("<arg_value>", " ").replace("<tool_call>", " ")
 
     def stop(self) -> None:
-        self._client.close()
-        self._client = None
+        # The client is created lazily, so a provider that never made a call has none.
+        if self._client is not None:
+            self._client.close()
+            self._client = None
 
 
 _embedding_model = None
