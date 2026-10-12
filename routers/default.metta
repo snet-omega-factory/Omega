@@ -79,5 +79,3 @@
      (change-state! &defaultRouterKeywords
        (llmKeywordsNormalized (configGetByKey router_escalate_keywords "alert_failed,error,premium_model")))
      (registerLLMRouter "default" default_router)))
-
-(= (violationKey) (py-call (os.getenv "OPENROUTER_API_KEY")))
