@@ -1,0 +1,105 @@
+# convert_request(_baseline_request()) of each real provider in
+# tests/test_providers_effective_model.py, generated on c193ab39857944017e067b426779d66113649313
+# (#358 as #373 merged it, tree == 77a118c: the A1 baseline; spec B17,
+#   amending O6.4). Read by R3-T2 (A1).
+#
+# Request: _baseline_request() as defined in that test file: system
+#   'You are Omega. HISTORY: none yet', user 'hi', an assistant call
+#   send(content='hello') id call_1 and its tool reply 'sent';
+#   max_tokens 1000, reasoning_mode 'medium', one tool send(content).
+# Configuration: the test's plugins fixture and _ai_providers():
+#   config._CONFIG/_COMMAND_LINE/_CONFIG_FILE emptied (every key at its
+#   default), OMEGA_OPENAI_PROMPT_CACHE_KEY, OMEGA_OPENROUTER_SESSION_ID
+#   and OMEGA_OPENROUTER_CACHE_TTL unset, each *_API_KEY = 'dummy-key',
+#   models = CONFIGURED (openaiapi qwen3.5:9b, asione asi1-ultra, openrouter z-ai/glm-5.2, openai gpt-5.5).
+# Stubs while generating (system python3, NOT tests/pytest.sh):
+#   openai -> a module whose OpenAI = object (convert_request never
+#   constructs a client); pytest -> fixture/mark.parametrize no-ops and
+#   a monkeypatch with setitem/setattr/setenv/delenv; src.logger -> the
+#   test's own logging.getLogger stub. If a stub altered the dict, R3-T2
+#   goes red under the real packages, which is the correct outcome.
+# Regenerate only if _baseline_request() or CONFIGURED changes.
+{'asione': {'extra_body': {'enable_thinking': True, 'thinking_budget': 500},
+            'max_tokens': 1000,
+            'messages': [{'content': 'You are Omega. HISTORY: none yet', 'role': 'system'},
+                         {'content': 'hi', 'role': 'user'},
+                         {'content': '',
+                          'role': 'assistant',
+                          'tool_calls': [{'function': {'arguments': '{"content": "hello"}',
+                                                       'name': 'send'},
+                                          'id': 'call_1',
+                                          'type': 'function'}]},
+                         {'content': 'sent', 'role': 'tool', 'tool_call_id': 'call_1'}],
+            'model': 'asi1-ultra',
+            'tool_choice': 'required',
+            'tools': [{'function': {'description': 'Send a message',
+                                    'name': 'send',
+                                    'parameters': {'additionalProperties': False,
+                                                   'properties': {'content': {'type': 'string'}},
+                                                   'required': ['content'],
+                                                   'type': 'object'},
+                                    'strict': True},
+                       'type': 'function'}]},
+ 'openai': {'input': [{'content': 'You are Omega. HISTORY: none yet', 'role': 'system'},
+                      {'content': 'hi', 'role': 'user'},
+                      {'arguments': '{"content": "hello"}',
+                       'call_id': 'call_1',
+                       'name': 'send',
+                       'type': 'function_call'},
+                      {'call_id': 'call_1', 'output': 'sent', 'type': 'function_call_output'}],
+            'max_output_tokens': 1000,
+            'model': 'gpt-5.5',
+            'prompt_cache_key': 'openai:gpt-5.5:36a8dee0bbc1b6a8a3eaa090',
+            'prompt_cache_retention': '24h',
+            'reasoning': {'effort': 'medium'},
+            'tool_choice': 'required',
+            'tools': [{'description': 'Send a message',
+                       'name': 'send',
+                       'parameters': {'additionalProperties': False,
+                                      'properties': {'content': {'type': 'string'}},
+                                      'required': ['content'],
+                                      'type': 'object'},
+                       'strict': True,
+                       'type': 'function'}]},
+ 'openaiapi': {'max_tokens': 1000,
+               'messages': [{'content': 'You are Omega. HISTORY: none yet', 'role': 'system'},
+                            {'content': 'hi', 'role': 'user'},
+                            {'content': '',
+                             'role': 'assistant',
+                             'tool_calls': [{'function': {'arguments': '{"content": "hello"}',
+                                                          'name': 'send'},
+                                             'id': 'call_1',
+                                             'type': 'function'}]},
+                            {'content': 'sent', 'role': 'tool', 'tool_call_id': 'call_1'}],
+               'model': 'qwen3.5:9b',
+               'tool_choice': 'required',
+               'tools': [{'function': {'description': 'Send a message',
+                                       'name': 'send',
+                                       'parameters': {'additionalProperties': False,
+                                                      'properties': {'content': {'type': 'string'}},
+                                                      'required': ['content'],
+                                                      'type': 'object'},
+                                       'strict': True},
+                          'type': 'function'}]},
+ 'openrouter': {'extra_body': {'reasoning': {'effort': 'medium', 'enabled': True, 'exclude': True},
+                               'session_id': 'openrouter:z-ai/glm-5.2:36a8dee0bbc1b6a8a3eaa090'},
+                'max_tokens': 1000,
+                'messages': [{'content': 'You are Omega. HISTORY: none yet', 'role': 'system'},
+                             {'content': 'hi', 'role': 'user'},
+                             {'content': '',
+                              'role': 'assistant',
+                              'tool_calls': [{'function': {'arguments': '{"content": "hello"}',
+                                                           'name': 'send'},
+                                              'id': 'call_1',
+                                              'type': 'function'}]},
+                             {'content': 'sent', 'role': 'tool', 'tool_call_id': 'call_1'}],
+                'model': 'z-ai/glm-5.2',
+                'tool_choice': 'required',
+                'tools': [{'function': {'description': 'Send a message',
+                                        'name': 'send',
+                                        'parameters': {'additionalProperties': False,
+                                                       'properties': {'content': {'type': 'string'}},
+                                                       'required': ['content'],
+                                                       'type': 'object'},
+                                        'strict': True},
+                           'type': 'function'}]}}

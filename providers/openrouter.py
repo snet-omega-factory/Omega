@@ -17,27 +17,12 @@ class OpenRouterProvider(providers.LLMProvider):
         model = config_get_by_key("model", openrouter_model)
         self.delegate = OpenRouterProviderImpl("OpenRouter", "OPENROUTER_API_KEY",
                                                model, "https://openrouter.ai/api/v1")
-        premium_model = config_get_by_key("premium_model", "")
-        self.premium_delegate = (
-            OpenRouterProviderImpl("OpenRouter", "OPENROUTER_API_KEY",
-                                   premium_model, "https://openrouter.ai/api/v1")
-            if premium_model else None
-        )
 
     def stop(self) -> None:
-        for delegate in (self.delegate, self.premium_delegate):
-            if delegate is not None:
-                delegate.stop()
+        self.delegate.stop()
 
     def chat(self, args: providers.LLMRequest) -> providers.LLMResponse:
-        delegate = self.delegate
-        if args.tier == "premium_model":
-            if self.premium_delegate is None:
-                raise ValueError("OpenRouter premium_model tier requires a configured premium_model")
-            delegate = self.premium_delegate
-        logger.info("[OpenRouterProvider.chat] Received tier=%s model=%s",
-                    args.tier, delegate._model_name)
-        return delegate.chat(args)
+        return self.delegate.chat(args)
 
 def loadOmegaPlugin():
     providers.registerLLMProvider("OpenRouter", OpenRouterProvider())
@@ -46,7 +31,8 @@ class OpenRouterProviderImpl(llm.AIProvider):
     """OpenRouter provider with reasoning mode enabled (reasoning tokens excluded from the response)."""
 
     def _openrouter_extra_body(self, request: providers.LLMRequest) -> dict[str, Any]:
-        is_anthropic = self._model_name.lower().startswith("anthropic/")
+        model = self.effective_model(request)
+        is_anthropic = model.lower().startswith("anthropic/")
         sysmsg = request.messages[0].content
         reasoning = request.reasoning_mode
         # For models that accept only a reasoning token budget (e.g. Anthropic),
@@ -63,7 +49,7 @@ class OpenRouterProviderImpl(llm.AIProvider):
         # Keep this stable per agent/session.
         session_id = config_get_by_key("OPENROUTER_SESSION_ID")
         if not session_id and sysmsg:
-            session_id = llm._stable_cache_key("openrouter", self._model_name, sysmsg)
+            session_id = llm._stable_cache_key("openrouter", model, sysmsg)
 
         if session_id:
             body["session_id"] = session_id[:256]

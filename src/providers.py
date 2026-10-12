@@ -1,7 +1,5 @@
 import config
 import logging
-import inspect
-from pprint import pformat
 from typing import List
 
 logger = logging.getLogger(__name__)
@@ -140,9 +138,14 @@ class LLMRequest:
         self.messages: [LLMMessage] = []
         self.max_tokens = config.config_get_by_key("maxOutputToken")
         self.reasoning_mode = config.config_get_by_key("reasoningMode")
-        self.tier = None
         self.tools = []
         self.tool_by_name = {}
+        # The routing envelope (ADR-0001): empty means not named. A provider
+        # reads only model; router and metadata are the router's.
+        self.provider = ""
+        self.model = ""
+        self.router = ""
+        self.metadata = {}
 
     def add_message(self, message):
         self.messages.append(message)
@@ -158,6 +161,22 @@ class LLMRequest:
 
     def with_reasoning_mode(self, reasoning_mode):
         self.reasoning_mode = reasoning_mode
+        return self
+
+    def with_provider(self, provider):
+        self.provider = provider
+        return self
+
+    def with_model(self, model):
+        self.model = model
+        return self
+
+    def with_router(self, router):
+        self.router = router
+        return self
+
+    def with_metadata(self, metadata):
+        self.metadata = metadata
         return self
 
     def add_tool(self, tool: LLMTool):
@@ -180,7 +199,7 @@ class LLMRequest:
         return self.tool_by_name.get(name, None)
 
     def __repr__(self):
-        return f"LLMRequest[messages={self.messages!r}, max_tokens={self.max_tokens!r}, reasoning_mode={self.reasoning_mode!r}, tools={self.tools!r}]"
+        return f"LLMRequest[messages={self.messages!r}, max_tokens={self.max_tokens!r}, reasoning_mode={self.reasoning_mode!r}, tools={self.tools!r}, provider={self.provider!r}, model={self.model!r}, router={self.router!r}]"
 
 class LLMResponse:
 
@@ -252,11 +271,10 @@ def llmRequestContentsNormalized(request):
     return " ".join(contents).translate(str.maketrans({char: " " for char in "[](),.:"})).lower()
 
 
-def llmProviderChat(request, tier=None):
-    """Chat with optional tier metadata; MeTTa's "none" sentinel means no tier."""
+def llmProviderChat(request):
+    """Chat via selected LLM provider"""
     global _llmprovider
     try:
-        request.tier = None if tier == "none" else tier
         response = _llmprovider.chat(request)
         return _validate_response(request, response)
     except Exception:
