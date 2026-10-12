@@ -106,6 +106,12 @@ def _merge_dicts(base: Optional[Dict[str, Any]], extra: Optional[Dict[str, Any]]
     merged.update(extra or {})
     return merged
 
+
+def _violation(request: LLMRequest) -> bool:
+    if request.model == premium:
+        return True
+    return False
+
 class AbstractAIProvider:
     def __init__(self, name: str):
         self._name = name
