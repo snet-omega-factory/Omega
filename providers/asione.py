@@ -50,7 +50,6 @@ class ASIOneProviderImpl(llm.AIProvider):
 
     def convert_request(self, request: providers.LLMRequest) -> dict[str, Any]:
         result = super().convert_request(request)
-        _ = request.router
         thinking_budget = _reasoning_budget(request.max_tokens,
                                             request.reasoning_mode)
         result["extra_body"] = {
