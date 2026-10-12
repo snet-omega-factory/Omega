@@ -232,6 +232,11 @@ class LLMProvider:
         """Stop and LLM provider and free resources"""
         pass
 
+    def model(self) -> str:
+        """The model the provider calls when the request names none; asked
+        after start(). "" for a provider with no model concept."""
+        return config.config_get_by_key("model") or ""
+
     def chat(self, request: LLMRequest) -> LLMResponse:
         """Chat with LLM provider"""
         raise NotImplementedError()
@@ -249,16 +254,61 @@ def registerLLMProvider(id: str, provider: LLMProvider) -> None:
     _llmProviderRegistry[id] = provider
 
 _llmprovider: LLMProvider = None
+_catalogue = None
 
 def llmProviderStart(provider):
-    """Select and start one of the LLM providers registered by plugins"""
-    global _llmprovider
+    """Select and start one of the LLM providers registered by plugins, then
+    enumerate the catalogue from its configured model"""
+    global _llmprovider, _catalogue
     _llmprovider = _llmProviderRegistry.get(provider, None)
     if _llmprovider is None:
         error = f"llmProviderStart: LLM provider plugin {provider} is not registered"
         logger.error(error)
         raise RuntimeError(error)
     _llmprovider.start()
+    # no_router is loop.metta's "routing off" until the null router (R6).
+    router = str(config.config_get_by_key("router") or "")
+    _catalogue = llmCatalogue(provider, _llmprovider.model(),
+                              config.config_get_by_key("premium_model") or "",
+                              "" if router == "no_router" else router)
+    logger.info(f"llmProviderStart: catalogue {_catalogue!r}")
+
+def llmCatalogue(provider, model, premium_model, router):
+    """
+    The catalogue (ADR-0001): the allow-list of (provider, model) pairs a
+    request may name. In increment 1 it is the running provider's configured
+    model plus premium_model, both on the running provider.
+
+    Arguments:
+    provider: the running provider's id
+    model: its configured model
+    premium_model: the configured premium model, "" when unset
+    router: the configured router name, "" when none is configured
+
+    A router configured without premium_model is a startup error naming the key.
+    """
+    if router and not premium_model:
+        error = f"llmCatalogue: router {router} is configured but premium_model is not set"
+        logger.error(error)
+        raise RuntimeError(error)
+    catalogue = [(provider, model)]
+    if premium_model and premium_model != model:
+        catalogue.append((provider, premium_model))
+    return catalogue
+
+def llmCatalogueRefusal(catalogue, value):
+    """
+    Check a (provider, model) value against the catalogue. Return None when it
+    is permitted, otherwise the refusal naming the value as received and the
+    catalogue. A malformed value is refused the same way, never completed.
+    An empty model is compared as any other value: it is permitted only where
+    the catalogue holds it, for a provider with no model concept.
+    """
+    if (isinstance(value, (tuple, list)) and len(value) == 2
+            and all(isinstance(part, str) for part in value)
+            and tuple(value) in catalogue):
+        return None
+    return f"llmCatalogueRefusal: {value!r} is not in the catalogue {catalogue!r}"
 
 def llmRequestContentsNormalized(request):
     """Prefix contents with role_user/role_tool, join, replace [](),.: with spaces, and lowercase."""
