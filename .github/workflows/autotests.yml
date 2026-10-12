@@ -124,12 +124,20 @@ jobs:
           TEST_SERVER_IP: 'host.docker.internal'
           IMPORT_KB_ON_START: '0' # TODO: this is turned off because Python dependencies are not installed to the workflow environment
 
-      - name: MeTTa and Python unit tests
+      - name: MeTTa unit tests
         env:
           PETTA_PATH: '/PeTTa'
           PROJECT_ROOT: '/PeTTa/repos/Omega'
         run: |
           docker exec -e PETTA_PATH=${PETTA_PATH} omega ${PROJECT_ROOT}/tests/mettatest.sh
+
+      # QA, fork only (qa/ci-split-steps): run pytest even when a MeTTa file fails, so one
+      # red cannot hide the Python results; -v names each test, -rs names each skip.
+      - name: Python unit tests
+        if: always()
+        env:
+          PYTEST_ADDOPTS: '-v -rs'
+        run: |
           ./tests/pytest.sh
 
       - name: Autotests - Phase 1 (Blocking Checks)
