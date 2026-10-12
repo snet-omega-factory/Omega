@@ -46,7 +46,9 @@ class OpenAIProviderImpl(llm.AIProvider):
                 "input": usermsg,
                 "max_output_tokens": max_tokens,
                 "reasoning": {"effort": reasoning},
-                "prompt_cache_key": config_get_by_key("OPENAI_PROMPT_CACHE_KEY", llm._stable_cache_key("openai", self._model_name, sysmsg)),
+                # No default here: config_get_by_key caches it, which would pin the
+                # first request's key for the life of the process.
+                "prompt_cache_key": config_get_by_key("OPENAI_PROMPT_CACHE_KEY") or llm._stable_cache_key("openai", self._model_name, sysmsg),
             }
             # GPT-5.5 supports only 24h; GPT-5.4 also supports extended retention.
             if self._model_name.startswith(("gpt-5.5", "gpt-5.4")):
